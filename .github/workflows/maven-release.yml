@@ -62,5 +62,5 @@ jobs:
         run: |
           git config --global user.name "${{ secrets.SR_GIT_RELEASE_BOOT_USERNAME }}"
           git config --global user.email "${{ secrets.SR_GIT_RELEASE_BOOT_EMAIL }}"
-          mvn release:prepare
-          mvn release:perform
+          mvn release:prepare -Dskip.unit.tests=true -Dskip.integration.tests=true
+          mvn release:perform -Dskip.unit.tests=true -Dskip.integration.tests=true

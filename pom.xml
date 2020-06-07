@@ -24,25 +24,6 @@
 
     <build>
         <plugins>
-            <!--Release {-->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-release-plugin</artifactId>
-                <configuration>
-                    <goals>pre-integration-test</goals>
-                    <preparationGoals>package</preparationGoals>
-                    <allowTimestampedSnapshots>true</allowTimestampedSnapshots>
-                    <tagNameFormat>@{project.version}</tagNameFormat>
-                    <remoteTagging>false</remoteTagging>
-                    <checkModificationExcludes>
-                        <checkModificationExclude>target/checkstyle-cachefile</checkModificationExclude>
-                        <checkModificationExclude>target/checkstyle-checker.xml</checkModificationExclude>
-                        <checkModificationExclude>target/maven-archiver/pom.properties</checkModificationExclude>
-                    </checkModificationExcludes>
-                </configuration>
-            </plugin>
-            <!--Release }-->
-
             <!--Code quality {-->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -53,7 +34,6 @@
                 </configuration>
             </plugin>
             <!--Code quality }-->
-
         </plugins>
     </build>
 
