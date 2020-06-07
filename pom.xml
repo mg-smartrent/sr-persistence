@@ -6,7 +6,7 @@
     <parent>
         <groupId>com.mg.platform</groupId>
         <artifactId>sr-parent</artifactId>
-        <version>1.25</version>
+        <version>1.26</version>
     </parent>
 
     <artifactId>persistence</artifactId>
