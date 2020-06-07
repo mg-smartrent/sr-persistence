@@ -1,0 +1,62 @@
+name: Maven Package
+env:
+  MVN_SERVER_ID: "github"
+  MVN_PACKAGE_REPO_URL: "https://maven.pkg.github.com/mg-smartrent/sr-artifactory"
+
+on:
+  push:
+    branches:
+      - '*'
+  pull_request:
+    branches:
+      - '*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+
+      #---------------------------------------------------------------
+      #---------------------Run on all branches-----------------------
+      #---------------------------------------------------------------
+
+      - name: Setup Maven settings-xml
+        uses: whelk-io/maven-settings-xml-action@v6
+        with:
+          # Updates the settings.xml from $HOME/.m2 with the server and repo info.
+          repositories: '[{ "id": "${MVN_SERVER_ID}", "url": "${MVN_PACKAGE_REPO_URL}" }]'
+          servers: '[{ "id": "${MVN_SERVER_ID}", "username": "${{ secrets.SR_GIT_USERNAME }}", "password": "${{ secrets.SR_GIT_PASSWORD }}" }]'
+
+      - uses: actions/checkout@v2
+      - name: Set up JDK 1.8
+        uses: actions/setup-java@v1
+        with:
+          java-version: 1.8
+          server-id: ${MVN_SERVER_ID} # Value of the distributionManagement/repository/id field of the pom.xml
+          settings-path: $HOME/.m2 # location for the settings.xml file
+
+      - name: Build
+        run: mvn -B package --file pom.xml
+
+      - name: Run Unit Tests
+        run: mvn test -Dskip.unit.tests=false -Dskip.integration.tests=true
+
+      - name: Run Integration Tests
+        run: mvn test -Dskip.unit.tests=false -Dskip.integration.tests=true
+
+      #---------------------------------------------------------------
+      #---------------------Run ony on master branch------------------
+      #---------------------------------------------------------------
+
+      - name: Publish to GitHub Packages
+        if: github.ref == 'refs/heads/master'
+        run: mvn -B deploy --file pom.xml
+
+      - name: Release
+        if: github.ref == 'refs/heads/master'
+        run: |
+          git config --global user.name "${{ secrets.SR_GIT_RELEASE_BOOT_USERNAME }}"
+          git config --global user.email "${{ secrets.SR_GIT_RELEASE_BOOT_EMAIL }}"
+          mvn release:prepare
+          mvn release:perform
