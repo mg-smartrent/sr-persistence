@@ -19,6 +19,15 @@ public interface AttachmentRepository<T> {
     T findOneBy(String fieldName, Object value, boolean includeData);
 
     /**
+     * Find one by ID.
+     *
+     * @param id          - ID to search for.
+     * @param includeData - if true input stream of the file will be attached to the result
+     * @return - result with one bizItem or null in case if not found
+     */
+    T findOneById(Object id, boolean includeData);
+
+    /**
      * Find all the models by criteria.
      *
      * @param fieldName - name of the field.

@@ -46,6 +46,11 @@ public class MongoGridFSRepository<T extends Attachment> implements AttachmentRe
     }
 
     @Override
+    public T findOneById(final Object id, final boolean includeData) {
+        return findOneBy("_id", id, includeData);
+    }
+
+    @Override
     public List<T> findAllBy(final String fieldName, final Object value) {
         return findAll(new Query(Criteria.where(fieldName).is(value)));
     }
