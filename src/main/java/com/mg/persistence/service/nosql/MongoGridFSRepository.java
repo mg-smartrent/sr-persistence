@@ -60,7 +60,7 @@ public class MongoGridFSRepository<T extends Attachment> implements AttachmentRe
     }
 
     @Override
-    public T save(final T model, String user) {
+    public T save(final T model, final String user) {
 
         DBObject metaData = new BasicDBObject();
         if (model.getCreatedOn() == null) {
@@ -79,7 +79,7 @@ public class MongoGridFSRepository<T extends Attachment> implements AttachmentRe
     }
 
     @Override
-    public void save(final List<T> models, String user) {
+    public void save(final List<T> models, final String user) {
         models.parallelStream().forEach(it -> save(it, user));
     }
 
