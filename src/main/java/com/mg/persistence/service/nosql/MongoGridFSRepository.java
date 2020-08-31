@@ -40,7 +40,7 @@ public class MongoGridFSRepository<T extends Attachment> implements AttachmentRe
 
 
     @Override
-    public T findOneBy(final String fieldName, final Object value, boolean includeData) {
+    public T findOneBy(final String fieldName, final Object value, final boolean includeData) {
         GridFSFile file = gridFsTemplate.findOne(new Query(Criteria.where(fieldName).is(value)));
         return (T) fileToAttachment(file, includeData);
     }
@@ -89,7 +89,7 @@ public class MongoGridFSRepository<T extends Attachment> implements AttachmentRe
     }
 
 
-    private Attachment fileToAttachment(final GridFSFile file, boolean includeData) {
+    private Attachment fileToAttachment(final GridFSFile file, final boolean includeData) {
         Attachment attachment = new Attachment();
         attachment.setId(file.getId().toString());
         attachment.setName(file.getFilename());
