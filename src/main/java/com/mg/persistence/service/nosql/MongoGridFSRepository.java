@@ -28,44 +28,40 @@ import java.util.List;
 public class MongoGridFSRepository<T extends Attachment> implements AttachmentRepository<T> {
 
     public static final String QUALIFIER = "mongo-grid-fs";
-    private final GridFsTemplate gridFsTemplate;
+    private final MongoTemplate mongoTemplate;
 
-    public MongoGridFSRepository(final MongoTemplate mongoTemplate,
-                                 final String collection) {
-        this.gridFsTemplate = new GridFsTemplate(
-                mongoTemplate.getMongoDbFactory(),
-                mongoTemplate.getConverter(),
-                collection);
+    public MongoGridFSRepository(final MongoTemplate mongoTemplate) {
+        this.mongoTemplate = mongoTemplate;
     }
 
 
     @Override
-    public T findOneBy(final String fieldName, final Object value, final boolean includeData) {
-        GridFSFile file = gridFsTemplate.findOne(new Query(Criteria.where(fieldName).is(value)));
-        return (T) fileToAttachment(file, includeData);
+    public T findOneBy(final String fieldName, final Object value, final boolean includeData, final String collection) {
+        GridFSFile file = getGridFsTemplate(collection).findOne(new Query(Criteria.where(fieldName).is(value)));
+        return (T) fileToAttachment(file, includeData, collection);
     }
 
     @Override
-    public T findOneById(final Object id, final boolean includeData) {
-        return findOneBy("_id", id, includeData);
+    public T findOneById(final Object id, final boolean includeData, final String collection) {
+        return findOneBy("_id", id, includeData, collection);
     }
 
     @Override
-    public List<T> findAllBy(final String fieldName, final Object value) {
-        return findAll(new Query(Criteria.where(fieldName).is(value)));
+    public List<T> findAllBy(final String fieldName, final Object value, final String collection) {
+        return findAll(new Query(Criteria.where(fieldName).is(value)), collection);
     }
 
     @Override
-    public List<T> findAll(final Query query) {
+    public List<T> findAll(final Query query, final String collection) {
         final List<Attachment> attachments = new ArrayList<>();
-        final GridFSFindIterable gridFSFiles = gridFsTemplate.find(query);
-        gridFSFiles.forEach(file -> attachments.add(fileToAttachment(file, false)));
+        final GridFSFindIterable gridFSFiles = getGridFsTemplate(collection).find(query);
+        gridFSFiles.forEach(file -> attachments.add(fileToAttachment(file, false, collection)));
 
         return (List<T>) attachments;
     }
 
     @Override
-    public T save(final T model, final String user) {
+    public T save(final T model, final String user, final String collection) {
 
         DBObject metaData = new BasicDBObject();
         if (model.getCreatedOn() == null) {
@@ -78,23 +74,24 @@ public class MongoGridFSRepository<T extends Attachment> implements AttachmentRe
         metaData.put(Attachment.Fields.name, model.getName());
         model.getMetadata().forEach(metaData::put);
 
-        ObjectId id = gridFsTemplate.store(model.getDataStream(), model.getName(), model.getType().name(), metaData);
+        ObjectId id = getGridFsTemplate(collection)
+                .store(model.getDataStream(), model.getName(), model.getType().name(), metaData);
 
-        return findOneBy("_id", id.toString(), false);
+        return findOneBy("_id", id.toString(), false, collection);
     }
 
     @Override
-    public void save(final List<T> models, final String user) {
-        models.parallelStream().forEach(it -> save(it, user));
+    public void save(final List<T> models, final String user, final String collection) {
+        models.parallelStream().forEach(it -> save(it, user, collection));
     }
 
     @Override
-    public void delete(final Object id) {
-        gridFsTemplate.delete(new Query(Criteria.where("_id").is(id)));
+    public void delete(final Object id, final String collection) {
+        getGridFsTemplate(collection).delete(new Query(Criteria.where("_id").is(id)));
     }
 
 
-    private Attachment fileToAttachment(final GridFSFile file, final boolean includeData) {
+    private Attachment fileToAttachment(final GridFSFile file, final boolean includeData, final String collection) {
         if (file == null) {
             return null;
         }
@@ -120,9 +117,16 @@ public class MongoGridFSRepository<T extends Attachment> implements AttachmentRe
             attachment.setType(Attachment.Type.valueOf(meta.getString(Attachment.Fields.type)));
         }
         if (includeData) {
-            final GridFsResource resource = gridFsTemplate.getResource(file);
+            final GridFsResource resource = getGridFsTemplate(collection).getResource(file);
             attachment.setDataStream(resource.getContent());
         }
         return attachment;
+    }
+
+    private GridFsTemplate getGridFsTemplate(final String collection) {
+        return new GridFsTemplate(
+                mongoTemplate.getMongoDbFactory(),
+                mongoTemplate.getConverter(),
+                collection);
     }
 }
