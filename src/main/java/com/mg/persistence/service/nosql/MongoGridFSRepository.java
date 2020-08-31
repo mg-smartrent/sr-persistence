@@ -80,7 +80,7 @@ public class MongoGridFSRepository<T extends Attachment> implements AttachmentRe
 
         ObjectId id = gridFsTemplate.store(model.getDataStream(), model.getName(), model.getType().name(), metaData);
 
-        return findOneBy("_id", id, false);
+        return findOneBy("_id", id.toString(), false);
     }
 
     @Override
@@ -95,6 +95,10 @@ public class MongoGridFSRepository<T extends Attachment> implements AttachmentRe
 
 
     private Attachment fileToAttachment(final GridFSFile file, final boolean includeData) {
+        if (file == null) {
+            return null;
+        }
+
         Attachment attachment = new Attachment();
         attachment.setId(file.getId().toString());
         attachment.setName(file.getFilename());
