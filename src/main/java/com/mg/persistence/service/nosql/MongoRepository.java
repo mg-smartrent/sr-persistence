@@ -13,7 +13,7 @@ import java.util.List;
 @Qualifier(MongoRepository.QUALIFIER)
 public class MongoRepository<T> implements Repository<T> {
 
-    public static final String QUALIFIER = "mongo";
+    public static final String QUALIFIER = "mongo-repo";
     private final MongoTemplate mongoTemplate;
 
     public MongoRepository(final MongoTemplate mongoTemplate) {
