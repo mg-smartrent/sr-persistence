@@ -8,15 +8,19 @@ import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 import com.mongodb.client.gridfs.GridFSFindIterable;
 import com.mongodb.client.gridfs.model.GridFSFile;
+import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.gridfs.GridFsResource;
 import org.springframework.data.mongodb.gridfs.GridFsTemplate;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @Service
@@ -36,9 +40,9 @@ public class MongoGridFSRepository<T extends Attachment> implements AttachmentRe
 
 
     @Override
-    public T findOneBy(final String fieldName, final Object value) {
+    public T findOneBy(final String fieldName, final Object value, boolean includeData) {
         GridFSFile file = gridFsTemplate.findOne(new Query(Criteria.where(fieldName).is(value)));
-        return (T) fileToAttachment(file);
+        return (T) fileToAttachment(file, includeData);
     }
 
     @Override
@@ -50,47 +54,65 @@ public class MongoGridFSRepository<T extends Attachment> implements AttachmentRe
     public List<T> findAll(final Query query) {
         final List<Attachment> attachments = new ArrayList<>();
         final GridFSFindIterable gridFSFiles = gridFsTemplate.find(query);
-        gridFSFiles.forEach(file -> attachments.add(fileToAttachment(file)));
+        gridFSFiles.forEach(file -> attachments.add(fileToAttachment(file, false)));
 
         return (List<T>) attachments;
     }
 
     @Override
-    public T save(final T model) {
+    public T save(final T model, String user) {
 
         DBObject metaData = new BasicDBObject();
         if (model.getCreatedOn() == null) {
-            metaData.put(TrackedItem.Fields.createdOn, model.getCreatedOn());
-            metaData.put(TrackedItem.Fields.createdBy, model.getCreatedBy());
+            metaData.put(TrackedItem.Fields.createdOn, Instant.now());
+            metaData.put(TrackedItem.Fields.createdBy, user);
         }
-        metaData.put(TrackedItem.Fields.modifiedOn, model.getModifiedOn());
-        metaData.put(TrackedItem.Fields.modifiedBy, model.getModifiedBy());
+        metaData.put(TrackedItem.Fields.modifiedOn, Instant.now());
+        metaData.put(TrackedItem.Fields.modifiedBy, user);
         metaData.put(Attachment.Fields.type, model.getType());
         metaData.put(Attachment.Fields.name, model.getName());
         model.getMetadata().forEach(metaData::put);
 
         ObjectId id = gridFsTemplate.store(model.getDataStream(), model.getName(), model.getType().name(), metaData);
 
-        return findOneBy(TrackedItem.Fields.id, id);
+        return findOneBy("_id", id, false);
     }
 
     @Override
-    public void save(final List<T> models) {
-        models.parallelStream().forEach(this::save);
+    public void save(final List<T> models, String user) {
+        models.parallelStream().forEach(it -> save(it, user));
     }
 
     @Override
     public void delete(final Object id) {
-        gridFsTemplate.delete(new Query(Criteria.where(TrackedItem.Fields.id).is(id)));
+        gridFsTemplate.delete(new Query(Criteria.where("_id").is(id)));
     }
 
 
-    private Attachment fileToAttachment(final GridFSFile file) {
+    private Attachment fileToAttachment(final GridFSFile file, boolean includeData) {
         Attachment attachment = new Attachment();
+        attachment.setId(file.getId().toString());
         attachment.setName(file.getFilename());
-        attachment.setDataStream(null); //todo:
-        if (file.getMetadata() != null) {
-            attachment.setType(Attachment.Type.valueOf(file.getMetadata().getString(Attachment.Fields.type)));
+        final Document meta = file.getMetadata();
+        if (meta != null) {
+
+            final Date createdOn = meta.getDate(TrackedItem.Fields.createdOn);
+            attachment.setCreatedOn(createdOn != null ? createdOn.toInstant() : null);
+
+            final Date modifiedOn = meta.getDate(TrackedItem.Fields.modifiedOn);
+            attachment.setModifiedOn(modifiedOn != null ? modifiedOn.toInstant() : null);
+
+            final Date deleteOn = meta.getDate(TrackedItem.Fields.deletedOn);
+            attachment.setDeletedOn(deleteOn != null ? deleteOn.toInstant() : null);
+
+            attachment.setModifiedBy(meta.getString(TrackedItem.Fields.modifiedBy));
+            attachment.setCreatedBy(meta.getString(TrackedItem.Fields.createdBy));
+            attachment.setDeletedBy(meta.getString(TrackedItem.Fields.deletedBy));
+            attachment.setType(Attachment.Type.valueOf(meta.getString(Attachment.Fields.type)));
+        }
+        if (includeData) {
+            final GridFsResource resource = gridFsTemplate.getResource(file);
+            attachment.setDataStream(resource.getContent());
         }
         return attachment;
     }
