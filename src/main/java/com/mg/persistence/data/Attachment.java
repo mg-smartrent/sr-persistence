@@ -13,6 +13,7 @@ import java.util.HashMap;
 public class Attachment extends TrackedItem {
     private Type type;
     private String name;
+    private String relatedItemId;
     private InputStream dataStream;
     private HashMap<String, Object> metadata = new HashMap<>();
 

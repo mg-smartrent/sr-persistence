@@ -47,6 +47,11 @@ public class MongoGridFSRepository<T extends Attachment> implements AttachmentRe
     }
 
     @Override
+    public T findOneByRelatedItemId(Object relatedItemId, boolean includeData, String collection) {
+        return findOneBy(Attachment.Fields.relatedItemId, relatedItemId, includeData, collection);
+    }
+
+    @Override
     public List<T> findAllBy(final String fieldName, final Object value, final String collection) {
         return findAll(new Query(Criteria.where(fieldName).is(value)), collection);
     }
@@ -72,6 +77,7 @@ public class MongoGridFSRepository<T extends Attachment> implements AttachmentRe
         metaData.put(TrackedItem.Fields.modifiedBy, user);
         metaData.put(Attachment.Fields.type, model.getType());
         metaData.put(Attachment.Fields.name, model.getName());
+        metaData.put(Attachment.Fields.relatedItemId, model.getRelatedItemId());
         model.getMetadata().forEach(metaData::put);
 
         ObjectId id = getGridFsTemplate(collection)
@@ -115,6 +121,7 @@ public class MongoGridFSRepository<T extends Attachment> implements AttachmentRe
             attachment.setCreatedBy(meta.getString(TrackedItem.Fields.createdBy));
             attachment.setDeletedBy(meta.getString(TrackedItem.Fields.deletedBy));
             attachment.setType(Attachment.Type.valueOf(meta.getString(Attachment.Fields.type)));
+            attachment.setRelatedItemId(meta.getString(Attachment.Fields.relatedItemId));
         }
         if (includeData) {
             final GridFsResource resource = getGridFsTemplate(collection).getResource(file);

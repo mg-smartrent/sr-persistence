@@ -30,6 +30,16 @@ public interface AttachmentRepository<T> {
     T findOneById(Object id, boolean includeData, String collection);
 
     /**
+     * Find one by related item ID.
+     *
+     * @param relatedItemId - ID of the related item.
+     * @param includeData   - if true input stream of the file will be attached to the result
+     * @param collection    - collection name where the data is stored
+     * @return - result with one bizItem or null in case if not found
+     */
+    T findOneByRelatedItemId(Object relatedItemId, boolean includeData, String collection);
+
+    /**
      * Find all the models by criteria.
      *
      * @param fieldName  - name of the field.
