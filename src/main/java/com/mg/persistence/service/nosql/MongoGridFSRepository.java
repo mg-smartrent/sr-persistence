@@ -47,7 +47,7 @@ public class MongoGridFSRepository<T extends Attachment> implements AttachmentRe
     }
 
     @Override
-    public T findOneByRelatedItemId(Object relatedItemId, boolean includeData, String collection) {
+    public T findOneByRelatedItemId(final Object relatedItemId, final boolean includeData, final String collection) {
         return findOneBy(Attachment.Fields.relatedItemId, relatedItemId, includeData, collection);
     }
 
