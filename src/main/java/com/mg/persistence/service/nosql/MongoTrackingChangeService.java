@@ -11,10 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @Log4j2
 @Service
@@ -51,7 +48,13 @@ public class MongoTrackingChangeService {
                                     final String username) {
         final List<Change> changes = new ArrayList<>();
         final String groupId = UUID.randomUUID().toString();
-        final DiffNode diff = ObjectDifferBuilder.buildDefault().compare(workingModel, baseModel);
+        final DiffNode diff = ObjectDifferBuilder.startBuilding()
+                .comparison().ofType(Instant.class).toUseEqualsMethod()
+                .and().comparison().ofType(Date.class).toUseEqualsMethod()
+                .and().build()
+                .compare(workingModel, baseModel);
+
+        ObjectDifferBuilder.buildDefault().compare(workingModel, baseModel);
 
         if (diff.hasChanges()) {
             diff.visit((node, visit) -> {
@@ -61,12 +64,12 @@ public class MongoTrackingChangeService {
 
                     Change change = new Change();
                     change.setObjectId(baseModelId);
-                    change.setFieldName(node.getPropertyName());
+                    change.setFieldName(node.getPath().toString());
                     change.setGroupId(groupId);
                     change.setNewValue(newValue);
                     change.setOldValue(oldValue);
                     change.setObjectType(workingModel.getClass().getSimpleName());
-                    change.setAction(getChangeAction(node));
+                    change.setAction(node.getState().name());
                     change.setCreatedOn(Instant.now());
                     change.setModifiedOn(Instant.now());
                     change.setCreatedBy(Optional.ofNullable(username).orElse("Unknown"));
@@ -78,15 +81,4 @@ public class MongoTrackingChangeService {
         return changes;
     }
 
-    private String getChangeAction(final DiffNode node) {
-        if (node.isAdded()) {
-            return "added";
-        } else if (node.isChanged()) {
-            return "changed";
-        } else if (node.isRemoved()) {
-            return "deleted";
-        } else {
-            return "unknown";
-        }
-    }
 }
