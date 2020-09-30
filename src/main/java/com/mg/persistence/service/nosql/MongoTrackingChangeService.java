@@ -38,7 +38,7 @@ public class MongoTrackingChangeService {
         }
     }
 
-    private List<Change> getChanges(Object workingModel, Object baseModel, String username) {
+    private List<Change> getChanges(final Object workingModel, final Object baseModel, final String username) {
         final List<Change> changes = new ArrayList<>();
         final String groupId = UUID.randomUUID().toString();
         final DiffNode diff = ObjectDifferBuilder.buildDefault().compare(workingModel, baseModel);
@@ -67,7 +67,7 @@ public class MongoTrackingChangeService {
         return changes;
     }
 
-    private String getChangeAction(DiffNode node) {
+    private String getChangeAction(final DiffNode node) {
         if (node.isAdded()) {
             return "added";
         } else if (node.isChanged()) {
