@@ -6,6 +6,7 @@ import de.danielbechler.diff.node.DiffNode;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
@@ -27,18 +28,27 @@ public class MongoTrackingChangeService {
         this.mongoTemplate = mongoTemplate;
     }
 
-    public void saveChanges(final Object workingModel,
-                            final Object baseModel,
+    @Async
+    public void saveChanges(final Object working,
+                            final Object base,
+                            final String baseId,
                             final String changesCollection,
                             final String username) {
-        final List<Change> changes = getChanges(workingModel, baseModel, username);
-        if (!CollectionUtils.isEmpty(changes)) {
-            log.debug("Saving {} changes into {}", changes.size(), changesCollection);
-            mongoTemplate.save(changes, changesCollection);
+        try {
+            final List<Change> changes = getChanges(working, base, baseId, username);
+            if (!CollectionUtils.isEmpty(changes)) {
+                log.debug("Saving {} changes into {}", changes.size(), changesCollection);
+                mongoTemplate.save(changes, changesCollection);
+            }
+        } catch (Exception e) {
+            log.error("Failed to save changes: ", e);
         }
     }
 
-    private List<Change> getChanges(final Object workingModel, final Object baseModel, final String username) {
+    private List<Change> getChanges(final Object workingModel,
+                                    final Object baseModel,
+                                    final String baseModelId,
+                                    final String username) {
         final List<Change> changes = new ArrayList<>();
         final String groupId = UUID.randomUUID().toString();
         final DiffNode diff = ObjectDifferBuilder.buildDefault().compare(workingModel, baseModel);
@@ -50,6 +60,7 @@ public class MongoTrackingChangeService {
                     final Object oldValue = node.canonicalGet(baseModel);
 
                     Change change = new Change();
+                    change.setObjectId(baseModelId);
                     change.setFieldName(node.getPropertyName());
                     change.setGroupId(groupId);
                     change.setNewValue(newValue);

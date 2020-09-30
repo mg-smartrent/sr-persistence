@@ -2,6 +2,8 @@ package com.mg.persistence.service.nosql;
 
 import com.mg.persistence.data.TrackedItem;
 import com.mg.persistence.service.Repository;
+import lombok.SneakyThrows;
+import org.apache.commons.beanutils.BeanUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -12,7 +14,7 @@ import java.util.List;
 
 @Service
 @Qualifier(MongoRepository.QUALIFIER)
-public class MongoRepository<T extends TrackedItem> implements Repository<T> {
+public class MongoRepository<T> implements Repository<T> {
 
     public static final String QUALIFIER = "mongo-repo";
     private final MongoTemplate mongoTemplate;
@@ -50,16 +52,20 @@ public class MongoRepository<T extends TrackedItem> implements Repository<T> {
         return mongoTemplate.count(query, entityClass, collection);
     }
 
+    @SneakyThrows
     public T save(final T model, final Class<T> entityClass, final String collection) {
-        final T baseModel = findOneBy(TrackedItem.Fields.id, model.getId(), entityClass, collection);
-        final T workingModel = mongoTemplate.save(model, collection);
-        if (baseModel != null) {
+        String id = BeanUtils.getProperty(model, "id");
+        String modifiedBy = BeanUtils.getProperty(model, "modifiedBy");
+
+        final T base = findOneBy(TrackedItem.Fields.id, id, entityClass, collection);
+        final T working = mongoTemplate.save(model, collection);
+
+        if (base != null) {
             String changesCollection = collection + "_changes";
-            changeService.saveChanges(
-                    workingModel, baseModel, changesCollection, workingModel.getModifiedBy());
+            changeService.saveChanges(working, base, id, changesCollection, modifiedBy);
         }
 
-        return workingModel;
+        return working;
     }
 
     public void save(final List<T> models, final Class<T> entityClass, final String collection) {

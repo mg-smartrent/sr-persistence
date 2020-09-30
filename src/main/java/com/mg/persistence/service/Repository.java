@@ -6,7 +6,7 @@ import org.springframework.data.mongodb.core.query.Query;
 
 import java.util.List;
 
-public interface Repository<T extends TrackedItem> {
+public interface Repository<T> {
 
 
     /**
