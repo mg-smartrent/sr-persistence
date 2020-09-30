@@ -1,7 +1,5 @@
 package com.mg.persistence.service;
 
-
-import com.mg.persistence.data.TrackedItem;
 import org.springframework.data.mongodb.core.query.Query;
 
 import java.util.List;
