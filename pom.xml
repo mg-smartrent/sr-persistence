@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
@@ -20,7 +21,13 @@
         <tag>HEAD</tag>
     </scm>
 
-    <dependencies />
+    <dependencies>
+        <dependency>
+            <groupId>de.danielbechler</groupId>
+            <artifactId>java-object-diff</artifactId>
+            <version>0.95</version>
+        </dependency>
+    </dependencies>
 
     <build>
         <plugins>
@@ -36,7 +43,7 @@
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
-<!--                <version>${jacoco.maven.plugin.version}</version>-->
+                <!--                <version>${jacoco.maven.plugin.version}</version>-->
                 <executions>
                     <execution>
                         <goals>
