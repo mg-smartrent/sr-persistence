@@ -1,5 +1,7 @@
 package com.mg.persistence.unit.service
 
+import com.mg.persistence.data.Change
+import com.mg.persistence.service.nosql.MongoTrackingChangeService
 import com.mg.persistence.unit.UnitTestSetup
 import com.mg.persistence.service.Repository
 import com.mg.persistence.service.nosql.MongoRepository
@@ -13,28 +15,29 @@ class MongoRepositoryTest extends UnitTestSetup {
 
     def "test: if is mongo instance"() {
         given:
-        Repository<Object> queryService = new MongoRepository<>()
+        Repository<Change> queryService = new MongoRepository<>(null, null)
         expect:
-        (queryService instanceof MongoRepository<Object>)
+        (queryService instanceof MongoRepository<Change>)
     }
 
 
-    def "test: is mongo instance"() {
+    def "test: repository API"() {
         setup:
         MongoTemplate template = Stub(MongoTemplate.class)
+        MongoTrackingChangeService changeService = Mock(MongoTrackingChangeService.class)
 
         when:
-        Repository<Object> queryService = new MongoRepository<>(template)
-        template.find(_, _, _) >> Arrays.asList(new Object())
+        Repository<Change> queryService = new MongoRepository<>(template, changeService)
+        template.find(_, _, _) >> Arrays.asList(new Change())
         template.count(_, _, _) >> 1
-        template.save(_) >> new Object()
+        template.save(_, _) >> new Change()
 
         then:
-        queryService.findAll(query, Object.class).size() == 1
-        queryService.findOneBy("id", "test", Object.class) != null
-        queryService.findAllBy("id", "test", Object.class).size() == 1
-        queryService.count(query, Object.class) == 1
-        queryService.save(new Object()) != null
+        queryService.findAll(query, Change.class, "coll").size() == 1
+        queryService.findOneBy("id", "test", Change.class, "coll") != null
+        queryService.findAllBy("id", "test", Change.class, "coll").size() == 1
+        queryService.count(query, Change.class, "coll") == 1
+        queryService.save(new Change(), Change.class, "coll") != null
     }
 
 }
