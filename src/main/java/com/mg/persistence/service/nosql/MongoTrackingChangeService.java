@@ -40,7 +40,7 @@ public class MongoTrackingChangeService {
             final List<Change> changes = getChanges(working, base, baseId, username);
             if (!CollectionUtils.isEmpty(changes)) {
                 log.debug("Saving {} changes into {}", changes.size(), changesCollection);
-                mongoTemplate.save(changes, changesCollection);
+                changes.parallelStream().forEach(change -> mongoTemplate.save(change, changesCollection));
             }
         } catch (Exception e) {
             log.error("Failed to save changes: ", e);
