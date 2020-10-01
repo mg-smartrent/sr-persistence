@@ -69,7 +69,7 @@ public class MongoRepository<T> implements Repository<T> {
     }
 
     public void save(final List<T> models, final Class<T> entityClass, final String collection) {
-        models.forEach(it -> save(it, entityClass, collection));
+        models.parallelStream().forEach(it -> save(it, entityClass, collection));
     }
 
 

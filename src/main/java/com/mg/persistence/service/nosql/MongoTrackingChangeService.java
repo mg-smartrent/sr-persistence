@@ -1,6 +1,7 @@
 package com.mg.persistence.service.nosql;
 
 import com.mg.persistence.data.Change;
+import de.danielbechler.diff.ObjectDiffer;
 import de.danielbechler.diff.ObjectDifferBuilder;
 import de.danielbechler.diff.node.DiffNode;
 import lombok.extern.log4j.Log4j2;
@@ -11,11 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
-import java.util.Optional;
+import java.util.*;
 
 
 @Log4j2
@@ -53,11 +50,7 @@ public class MongoTrackingChangeService {
                                     final String username) {
         final List<Change> changes = new ArrayList<>();
         final String groupId = UUID.randomUUID().toString();
-        final DiffNode diff = ObjectDifferBuilder.startBuilding()
-                .comparison().ofType(Instant.class).toUseEqualsMethod()
-                .and().comparison().ofType(Date.class).toUseEqualsMethod()
-                .and().build()
-                .compare(workingModel, baseModel);
+        final DiffNode diff = getObjectDiffer().compare(workingModel, baseModel);
 
         ObjectDifferBuilder.buildDefault().compare(workingModel, baseModel);
 
@@ -85,5 +78,21 @@ public class MongoTrackingChangeService {
         }
         return changes;
     }
+
+    private ObjectDiffer getObjectDiffer() {
+        return ObjectDifferBuilder.startBuilding()
+                .comparison().ofType(Instant.class).toUseEqualsMethod().and()
+                .comparison().ofType(Date.class).toUseEqualsMethod().and()
+                .inclusion().exclude()
+                .propertyName("id")
+                .propertyName("deletedOn")
+                .propertyName("deletedBy")
+                .propertyName("modifiedOn")
+                .propertyName("modifiedBy")
+                .propertyName("createdOn")
+                .propertyName("createdBy")
+                .and().build();
+    }
+
 
 }
