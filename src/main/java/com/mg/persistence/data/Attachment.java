@@ -17,7 +17,7 @@ public class Attachment extends TrackedItem {
     private HashMap<String, Object> metadata = new HashMap<>();
 
 
-    public void addMetadata(String key, Object value) {
+    public void addMetadata(final String key, final Object value) {
         this.metadata.put(key, value);
     }
 
