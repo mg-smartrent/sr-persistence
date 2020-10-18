@@ -4,21 +4,24 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.FieldNameConstants;
 
-import java.io.InputStream;
 import java.util.HashMap;
 
 @Data
 @FieldNameConstants
 @EqualsAndHashCode(callSuper = true)
 public class Attachment extends TrackedItem {
-    private Type type;
+    private AttachmentType type;
     private String name;
     private String relatedItemId;
-    private InputStream dataStream;
+    private byte[] data;
     private HashMap<String, Object> metadata = new HashMap<>();
 
 
-    public enum Type {
+    public void addMetadata(String key, Object value) {
+        this.metadata.put(key, value);
+    }
+
+    public enum AttachmentType {
         VIDEO,
         IMAGE,
         PDF,

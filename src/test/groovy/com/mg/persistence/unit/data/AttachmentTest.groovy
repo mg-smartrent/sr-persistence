@@ -15,9 +15,9 @@ public class AttachmentTest extends UnitTestSetup {
         when:
         Attachment attachment = new Attachment()
         attachment.setId(id)
-        attachment.setDataStream(null)
+        attachment.setData(null)
         attachment.setName("name")
-        attachment.setType(Attachment.Type.IMAGE)
+        attachment.setType(Attachment.AttachmentType.IMAGE)
         attachment.setCreatedBy("CreatedBy")
         attachment.setCreatedOn(now)
         attachment.setModifiedBy("ModifiedBy")
@@ -32,9 +32,9 @@ public class AttachmentTest extends UnitTestSetup {
 
         then:
         attachment.getId() == id
-        attachment.getDataStream() == null
+        attachment.getData() == null
         attachment.getName() == "name"
-        attachment.getType() == Attachment.Type.IMAGE
+        attachment.getType() == Attachment.AttachmentType.IMAGE
         attachment.getCreatedBy() == "CreatedBy"
         attachment.getCreatedOn() == now
         attachment.getModifiedBy() == "ModifiedBy"

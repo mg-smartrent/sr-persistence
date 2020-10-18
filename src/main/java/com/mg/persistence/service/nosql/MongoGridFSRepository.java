@@ -1,6 +1,8 @@
 package com.mg.persistence.service.nosql;
 
 
+import com.google.common.io.ByteSource;
+import com.google.common.io.ByteStreams;
 import com.mg.persistence.data.Attachment;
 import com.mg.persistence.data.TrackedItem;
 import com.mg.persistence.service.AttachmentRepository;
@@ -8,6 +10,8 @@ import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 import com.mongodb.client.gridfs.GridFSFindIterable;
 import com.mongodb.client.gridfs.model.GridFSFile;
+import lombok.SneakyThrows;
+import org.bson.BsonObjectId;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -17,6 +21,7 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.gridfs.GridFsResource;
 import org.springframework.data.mongodb.gridfs.GridFsTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -80,6 +85,7 @@ public class MongoGridFSRepository<T extends Attachment> implements AttachmentRe
         return (List<T>) attachments;
     }
 
+    @SneakyThrows
     @Override
     public T save(final T model, final String user, final String collection) {
 
@@ -95,8 +101,8 @@ public class MongoGridFSRepository<T extends Attachment> implements AttachmentRe
         metaData.put(Attachment.Fields.relatedItemId, model.getRelatedItemId());
         model.getMetadata().forEach(metaData::put);
 
-        ObjectId id = getGridFsTemplate(collection)
-                .store(model.getDataStream(), model.getName(), model.getType().name(), metaData);
+        ObjectId id = getGridFsTemplate(collection).store(
+                ByteSource.wrap(model.getData()).openStream(), model.getName(), model.getType().name(), metaData);
 
         return findOneBy("_id", id.toString(), false, collection);
     }
@@ -111,16 +117,16 @@ public class MongoGridFSRepository<T extends Attachment> implements AttachmentRe
         getGridFsTemplate(collection).delete(new Query(Criteria.where("_id").is(id)));
     }
 
-
-    private Attachment fileToAttachment(final GridFSFile file, final boolean includeData, final String collection) {
-        if (file == null) {
+    @SneakyThrows
+    private Attachment fileToAttachment(final GridFSFile fsFile, final boolean includeData, final String collection) {
+        if (fsFile == null) {
             return null;
         }
 
         Attachment attachment = new Attachment();
-        attachment.setId(file.getId().toString());
-        attachment.setName(file.getFilename());
-        final Document meta = file.getMetadata();
+        attachment.setId(((BsonObjectId) fsFile.getId()).getValue().toString());
+        attachment.setName(fsFile.getFilename());
+        final Document meta = fsFile.getMetadata();
         if (meta != null) {
 
             final Date createdOn = meta.getDate(TrackedItem.Fields.createdOn);
@@ -135,13 +141,16 @@ public class MongoGridFSRepository<T extends Attachment> implements AttachmentRe
             attachment.setModifiedBy(meta.getString(TrackedItem.Fields.modifiedBy));
             attachment.setCreatedBy(meta.getString(TrackedItem.Fields.createdBy));
             attachment.setDeletedBy(meta.getString(TrackedItem.Fields.deletedBy));
-            attachment.setType(Attachment.Type.valueOf(meta.getString(Attachment.Fields.type)));
+            attachment.setType(Attachment.AttachmentType.valueOf(meta.getString(Attachment.Fields.type)));
             attachment.setRelatedItemId(meta.getString(Attachment.Fields.relatedItemId));
+
+            meta.forEach((key, value) -> attachment.getMetadata().put(key, value));
         }
         if (includeData) {
-            final GridFsResource resource = getGridFsTemplate(collection).getResource(file);
-            attachment.setDataStream(resource.getContent());
+            final GridFsResource resource = getGridFsTemplate(collection).getResource(fsFile);
+            attachment.setData(ByteStreams.toByteArray(resource.getContent()));
         }
+
         return attachment;
     }
 
