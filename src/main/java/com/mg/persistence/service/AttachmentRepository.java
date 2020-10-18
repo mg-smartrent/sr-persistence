@@ -40,6 +40,16 @@ public interface AttachmentRepository<T> {
     T findOneByRelatedItemId(Object relatedItemId, boolean includeData, String collection);
 
     /**
+     * Find all by related item ID.
+     *
+     * @param relatedItemId - ID of the related item.
+     * @param includeData   - if true input stream of the file will be attached to the result
+     * @param collection    - collection name where the data is stored
+     * @return - a list off attachments
+     */
+    List<T> findAllByRelatedItemId(Object relatedItemId, boolean includeData, String collection);
+
+    /**
      * Find all the models by criteria.
      *
      * @param fieldName  - name of the field.
@@ -57,6 +67,16 @@ public interface AttachmentRepository<T> {
      * @return - list of items that matches search criteria
      */
     List<T> findAll(Query query, String collection);
+
+    /**
+     * Find all the models by criteria.
+     *
+     * @param query       - search criteria
+     * @param includeData - true if attachment data should be included
+     * @param collection  - collection name where the data is stored
+     * @return - list of items that matches search criteria
+     */
+    List<T> findAll(Query query, boolean includeData, String collection);
 
     /**
      * Persists model in to the database.
