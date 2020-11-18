@@ -47,7 +47,7 @@ public class MongoGridFSRepository<T extends Attachment> implements AttachmentRe
 
         Query query = new Query(Criteria
                 .where(fieldName).is(value)
-                .and(Attachment.Fields.type).is(type.name()));
+                .and("metadata.type").is(type.name()));
         GridFSFile file = getGridFsTemplate(collection).findOne(query);
 
         return (T) fileToAttachment(file, includeData, collection);
@@ -78,7 +78,7 @@ public class MongoGridFSRepository<T extends Attachment> implements AttachmentRe
         String fieldName = "metadata." + Attachment.Fields.relatedItemId;
         Query query = new Query(Criteria
                 .where(fieldName).is(relatedItemId)
-                .and(Attachment.Fields.type).is(type.name()));
+                .and("metadata.type").is(type.name()));
 
         return findAll(query, includeData, collection);
     }
