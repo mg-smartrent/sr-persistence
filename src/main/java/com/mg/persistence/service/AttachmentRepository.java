@@ -25,31 +25,34 @@ public interface AttachmentRepository<T> {
      * Find one by ID.
      *
      * @param id          - ID to search for.
+     * @param type        - attachment type
      * @param includeData - if true input stream of the file will be attached to the result
      * @param collection  - collection name where the data is stored
      * @return - result with one bizItem or null in case if not found
      */
-    T findOneById(Object id, final AttachmentType type, boolean includeData, String collection);
+    T findOneById(Object id, AttachmentType type, boolean includeData, String collection);
 
     /**
      * Find one by related item ID.
      *
      * @param relatedItemId - ID of the related item.
+     * @param type          - attachment type
      * @param includeData   - if true input stream of the file will be attached to the result
      * @param collection    - collection name where the data is stored
      * @return - result with one bizItem or null in case if not found
      */
-    T findOneByRelatedItemId(Object relatedItemId, final AttachmentType type, boolean includeData, String collection);
+    T findOneByRelatedItemId(Object relatedItemId, AttachmentType type, boolean includeData, String collection);
 
     /**
      * Find all by related item ID.
      *
      * @param relatedItemId - ID of the related item.
+     * @param type          - attachment type
      * @param includeData   - if true input stream of the file will be attached to the result
      * @param collection    - collection name where the data is stored
      * @return - a list off attachments
      */
-    List<T> findAllByRelatedItemId(Object relatedItemId, final AttachmentType type, boolean includeData, String collection);
+    List<T> findAllByRelatedItemId(Object relatedItemId, AttachmentType type, boolean includeData, String collection);
 
     /**
      * Find all the models by criteria.

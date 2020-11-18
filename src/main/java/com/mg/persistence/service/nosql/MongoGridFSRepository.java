@@ -45,10 +45,10 @@ public class MongoGridFSRepository<T extends Attachment> implements AttachmentRe
                        final boolean includeData,
                        final String collection) {
 
-        final Query query = new Query(Criteria
+        Query query = new Query(Criteria
                 .where(fieldName).is(value)
                 .and(Attachment.Fields.type).is(type.name()));
-        final GridFSFile file = getGridFsTemplate(collection).findOne(query);
+        GridFSFile file = getGridFsTemplate(collection).findOne(query);
 
         return (T) fileToAttachment(file, includeData, collection);
     }
@@ -76,7 +76,7 @@ public class MongoGridFSRepository<T extends Attachment> implements AttachmentRe
                                           final boolean includeData,
                                           final String collection) {
         String fieldName = "metadata." + Attachment.Fields.relatedItemId;
-        final Query query = new Query(Criteria
+        Query query = new Query(Criteria
                 .where(fieldName).is(relatedItemId)
                 .and(Attachment.Fields.type).is(type.name()));
 
@@ -95,8 +95,8 @@ public class MongoGridFSRepository<T extends Attachment> implements AttachmentRe
 
     @Override
     public List<T> findAll(final Query query, final boolean includeData, final String collection) {
-        final List<Attachment> attachments = new ArrayList<>();
-        final GridFSFindIterable gridFSFiles = getGridFsTemplate(collection).find(query);
+        List<Attachment> attachments = new ArrayList<>();
+        GridFSFindIterable gridFSFiles = getGridFsTemplate(collection).find(query);
         gridFSFiles.forEach(file -> attachments.add(fileToAttachment(file, includeData, collection)));
 
         return (List<T>) attachments;
