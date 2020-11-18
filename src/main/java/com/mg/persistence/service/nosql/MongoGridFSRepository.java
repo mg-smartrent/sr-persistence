@@ -1,9 +1,8 @@
 package com.mg.persistence.service.nosql;
 
 
-import com.google.common.io.ByteSource;
-import com.google.common.io.ByteStreams;
 import com.mg.persistence.data.Attachment;
+import com.mg.persistence.data.Attachment.AttachmentType;
 import com.mg.persistence.data.TrackedItem;
 import com.mg.persistence.service.AttachmentRepository;
 import com.mongodb.BasicDBObject;
@@ -40,28 +39,47 @@ public class MongoGridFSRepository<T extends Attachment> implements AttachmentRe
 
 
     @Override
-    public T findOneBy(final String fieldName, final Object value, final boolean includeData, final String collection) {
-        GridFSFile file = getGridFsTemplate(collection).findOne(new Query(Criteria.where(fieldName).is(value)));
+    public T findOneBy(final String fieldName,
+                       final Object value,
+                       final AttachmentType type,
+                       final boolean includeData,
+                       final String collection) {
+
+        final Query query = new Query(Criteria
+                .where(fieldName).is(value)
+                .and(Attachment.Fields.type).is(type.name()));
+        final GridFSFile file = getGridFsTemplate(collection).findOne(query);
+
         return (T) fileToAttachment(file, includeData, collection);
     }
 
     @Override
-    public T findOneById(final Object id, final boolean includeData, final String collection) {
-        return findOneBy("_id", id, includeData, collection);
+    public T findOneById(final Object id,
+                         final AttachmentType type,
+                         final boolean includeData,
+                         final String collection) {
+        return findOneBy("_id", id, type, includeData, collection);
     }
 
     @Override
-    public T findOneByRelatedItemId(final Object relatedItemId, final boolean includeData, final String collection) {
+    public T findOneByRelatedItemId(final Object relatedItemId,
+                                    final AttachmentType type,
+                                    final boolean includeData,
+                                    final String collection) {
         String fieldName = "metadata." + Attachment.Fields.relatedItemId;
-        return findOneBy(fieldName, relatedItemId, includeData, collection);
+        return findOneBy(fieldName, relatedItemId, type, includeData, collection);
     }
 
     @Override
     public List<T> findAllByRelatedItemId(final Object relatedItemId,
+                                          final AttachmentType type,
                                           final boolean includeData,
                                           final String collection) {
         String fieldName = "metadata." + Attachment.Fields.relatedItemId;
-        final Query query = new Query(Criteria.where(fieldName).is(relatedItemId));
+        final Query query = new Query(Criteria
+                .where(fieldName).is(relatedItemId)
+                .and(Attachment.Fields.type).is(type.name()));
+
         return findAll(query, includeData, collection);
     }
 
@@ -100,10 +118,10 @@ public class MongoGridFSRepository<T extends Attachment> implements AttachmentRe
         metaData.put(Attachment.Fields.relatedItemId, model.getRelatedItemId());
         model.getMetadata().forEach(metaData::put);
 
-        ObjectId id = getGridFsTemplate(collection).store(
-                ByteSource.wrap(model.getData()).openStream(), model.getName(), model.getType().name(), metaData);
+        ObjectId id = getGridFsTemplate(collection)
+                .store(model.getData(), model.getName(), model.getType().name(), metaData);
 
-        return findOneBy("_id", id.toString(), false, collection);
+        return findOneBy("_id", id.toString(), model.getType(), false, collection);
     }
 
     @Override
@@ -140,14 +158,14 @@ public class MongoGridFSRepository<T extends Attachment> implements AttachmentRe
             attachment.setModifiedBy(meta.getString(TrackedItem.Fields.modifiedBy));
             attachment.setCreatedBy(meta.getString(TrackedItem.Fields.createdBy));
             attachment.setDeletedBy(meta.getString(TrackedItem.Fields.deletedBy));
-            attachment.setType(Attachment.AttachmentType.valueOf(meta.getString(Attachment.Fields.type)));
+            attachment.setType(AttachmentType.valueOf(meta.getString(Attachment.Fields.type)));
             attachment.setRelatedItemId(meta.getString(Attachment.Fields.relatedItemId));
 
             meta.forEach((key, value) -> attachment.getMetadata().put(key, value));
         }
         if (includeData) {
             final GridFsResource resource = getGridFsTemplate(collection).getResource(fsFile);
-            attachment.setData(ByteStreams.toByteArray(resource.getContent()));
+            attachment.setData(resource.getInputStream());
         }
 
         return attachment;

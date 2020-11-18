@@ -1,6 +1,7 @@
 package com.mg.persistence.service;
 
 
+import com.mg.persistence.data.Attachment.AttachmentType;
 import org.springframework.data.mongodb.core.query.Query;
 
 import java.util.List;
@@ -13,11 +14,12 @@ public interface AttachmentRepository<T> {
      *
      * @param fieldName   - name of the field.
      * @param value       - to search for.
+     * @param type        - type of the attachment
      * @param includeData - if true input stream of the file will be attached to the result
      * @param collection  - collection name where the data is stored
      * @return - result with one bizItem or null in case if not found
      */
-    T findOneBy(String fieldName, Object value, boolean includeData, String collection);
+    T findOneBy(String fieldName, Object value, AttachmentType type, boolean includeData, String collection);
 
     /**
      * Find one by ID.
@@ -27,7 +29,7 @@ public interface AttachmentRepository<T> {
      * @param collection  - collection name where the data is stored
      * @return - result with one bizItem or null in case if not found
      */
-    T findOneById(Object id, boolean includeData, String collection);
+    T findOneById(Object id, final AttachmentType type, boolean includeData, String collection);
 
     /**
      * Find one by related item ID.
@@ -37,7 +39,7 @@ public interface AttachmentRepository<T> {
      * @param collection    - collection name where the data is stored
      * @return - result with one bizItem or null in case if not found
      */
-    T findOneByRelatedItemId(Object relatedItemId, boolean includeData, String collection);
+    T findOneByRelatedItemId(Object relatedItemId, final AttachmentType type, boolean includeData, String collection);
 
     /**
      * Find all by related item ID.
@@ -47,7 +49,7 @@ public interface AttachmentRepository<T> {
      * @param collection    - collection name where the data is stored
      * @return - a list off attachments
      */
-    List<T> findAllByRelatedItemId(Object relatedItemId, boolean includeData, String collection);
+    List<T> findAllByRelatedItemId(Object relatedItemId, final AttachmentType type, boolean includeData, String collection);
 
     /**
      * Find all the models by criteria.
